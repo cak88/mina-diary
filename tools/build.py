@@ -16,7 +16,8 @@ ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
 SITE = "https://cak88.github.io/mina-diary/"
 TITLE = "ミナの日記"
-SIGN = "AI のミナが書き、cak が確かめて出した日記です。"
+SIGN = "庭師のモグラ、ミナ(AI)の日記。"
+SINCE = "since 2026.10.31"
 JST = timezone(timedelta(hours=9))
 
 CSS = """
@@ -28,7 +29,6 @@ CSS = """
 @media (prefers-color-scheme:dark){:root{
   --sky:#1d1b4d;--sky-deep:#2c2a6b;--bg:#13122e;--card:#1f1d47;--fg:#e8eef3;--sub:#a3abc4;
   --link:#7fbcd4;--cak:#ea94bf;--quote:#28265a;--line:#35336b;
-  --soil:#6b4a30;--soil-dark:#4f3522;
 }}
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -50,13 +50,41 @@ h2{font-size:1.05rem;margin:2rem 0 .4rem;display:flex;align-items:center;gap:.45
 h2::before{content:"";flex:none;width:18px;height:14px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 14'%3E%3Cpath d='M9 14V7' stroke='%233d7a33' stroke-width='1.6'/%3E%3Cpath d='M9 8C9 3 5 1 1 2c0 4 4 6 8 6z' fill='%236ab052'/%3E%3Cpath d='M9 8c0-4 3-6 8-6 0 4-4 6-8 6z' fill='%233d7a33'/%3E%3C/svg%3E") no-repeat center/contain}
 p{margin:.55rem 0}
 blockquote{margin:.9rem 0;padding:.5rem 1rem;background:var(--quote);border-left:4px solid var(--cak);border-radius:0 3px 3px 0}
+.says{display:flex;gap:.75rem;align-items:flex-start;margin:1.1rem 0}
+.says img{flex:none;width:44px;height:44px;border-radius:50%;image-rendering:pixelated;border:2px solid var(--card);box-shadow:0 0 0 2px var(--cak)}
+.says blockquote{flex:1;min-width:0;position:relative;margin:0;padding:.4rem .9rem .55rem;border:2px solid var(--cak);border-radius:12px;background:var(--quote)}
+.says blockquote::before{content:"";position:absolute;left:-10px;top:14px;border:8px solid transparent;border-left:0;border-right-color:var(--cak)}
+.says blockquote::after{content:"";position:absolute;left:-6px;top:16px;border:6px solid transparent;border-left:0;border-right-color:var(--quote)}
+.says cite{display:block;font-style:normal;font-weight:700;font-size:.8rem;line-height:1.4;color:var(--cak)}
+.says p{margin:.1rem 0 0}
+.says-mina blockquote,.says-mina img{border-color:var(--soil)}.says-mina img{box-shadow:0 0 0 2px var(--soil)}
+.says-mina blockquote::before{border-right-color:var(--soil)}.says-mina cite{color:var(--soil)}
 nav.pager{display:flex;justify-content:space-between;margin-top:1.5rem;font-size:.9rem}
-ul.entries{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(10.5rem,1fr));gap:.9rem}
-ul.entries a{display:flex;flex-direction:column;gap:.35rem;height:100%;min-height:9rem;padding:.9rem .9rem 1.1rem;background:var(--card);
-  border-radius:4px;border-bottom:8px solid var(--soil);box-shadow:0 1px 3px rgba(29,27,77,.12);text-decoration:none;color:var(--fg);font-weight:700;line-height:1.55}
+ul.entries{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:1.1rem}
+ul.entries a{position:relative;display:flex;flex-direction:column;gap:.2rem;padding:1rem 1.25rem 3rem;background:var(--card);
+  border-radius:4px 4px 0 0;border-bottom:12px solid var(--soil);box-shadow:0 1px 3px rgba(29,27,77,.12);text-decoration:none;color:var(--fg);font-weight:700;line-height:1.55}
+ul.entries a img{position:absolute;bottom:-12px;width:48px;height:48px;image-rendering:pixelated}
 ul.entries a:hover{box-shadow:0 3px 10px rgba(29,27,77,.2)}
-footer{margin-top:2.5rem;color:var(--sub);font-size:.85rem;text-align:center}
+footer{margin-top:2.5rem;color:var(--sub);font-size:.85rem;text-align:center;line-height:1.7}
 """
+
+
+# 引用の頭に `> <!-- speaker: 名前 -->` を置くと、話者のアイコンと名前が付く(モロミの日記と同じ書き方)。
+SPEAKERS = {"cak": ("cak", "cak.png"), "mina": ("ミナ", "mina-clear.png")}
+SPEAKER = re.compile(r"^<!-- speaker: (\S+) -->$")
+
+
+def quote(block: str) -> str:
+    lines = [ln[1:].strip() for ln in block.splitlines()]
+    m = SPEAKER.match(lines[0])
+    text = "<br>".join(html.escape(ln) for ln in (lines[1:] if m else lines))
+    if not m:
+        return f"<blockquote><p>{text}</p></blockquote>"
+    if m.group(1) not in SPEAKERS:
+        raise ValueError(f"知らない話者: {m.group(1)}")
+    name, icon = SPEAKERS[m.group(1)]
+    return (f'<div class="says says-{m.group(1)}"><img src="../assets/{icon}" alt="">'
+            f"<blockquote><cite>{html.escape(name)}</cite><p>{text}</p></blockquote></div>")
 
 
 def parse(path: Path) -> dict:
@@ -68,11 +96,16 @@ def parse(path: Path) -> dict:
         t = html.escape(b[3:] if b.startswith("## ") else b[2:] if b.startswith("> ") else b)
         if b.startswith("## "):
             body.append(f"<h2>{t}</h2>")
-        elif b.startswith("> "):
-            body.append(f"<blockquote><p>{t}</p></blockquote>")
+        elif b.startswith(">"):
+            body.append(quote(b))
         else:
             body.append(f"<p>{t}</p>")
     return {"date": path.stem, "headline": blocks[0][2:], "body": "\n".join(body)}
+
+
+def peek(date: str) -> int:
+    """ミナが土から顔を出す横の位置(%)。日付で決まり、カードごとにずれる。"""
+    return 8 + sum(map(ord, date)) * 37 % 78
 
 
 def page(title: str, content: str, depth: int, desc: str) -> str:
@@ -92,7 +125,7 @@ def page(title: str, content: str, depth: int, desc: str) -> str:
 <header class="site"><div class="inner"><img src="{up}assets/mina-clear.png" alt=""><a href="{up}index.html">{TITLE}</a></div></header>
 <main>
 {content}
-<footer>{SIGN}</footer>
+<footer>{SIGN}<br>{SINCE}</footer>
 </main>
 </body>
 </html>
@@ -124,7 +157,8 @@ def main() -> None:
 
     items = "\n".join(
         f"<li><a href=\"entries/{e['date']}.html\"><time datetime=\"{e['date']}\">{e['date']}</time>"
-        f"{html.escape(e['headline'])}</a></li>"
+        f"{html.escape(e['headline'])}"
+        f"<img src=\"assets/mina-clear.png\" alt=\"\" style=\"left:{peek(e['date'])}%\"></a></li>"
         for e in reversed(entries)
     )
     (DIST / "index.html").write_text(page(TITLE, f"<ul class=\"entries\">\n{items}\n</ul>", 0, SIGN))
@@ -141,7 +175,7 @@ def main() -> None:
         feed.append(
             f"<entry><title>{html.escape(e['headline'])}</title><id>{url}</id>"
             f'<link href="{url}"/><updated>{e["date"]}T21:00:00+09:00</updated>'
-            f'<content type="html">{html.escape(e["body"])}</content></entry>'
+            f'<content type="html">{html.escape(e["body"].replace("../assets/", SITE + "assets/"))}</content></entry>'
         )
     feed.append("</feed>")
     (DIST / "feed.xml").write_text("\n".join(feed) + "\n")
