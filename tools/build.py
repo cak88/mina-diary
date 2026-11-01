@@ -88,6 +88,9 @@ footer{margin-top:2.5rem;color:var(--sub);font-size:.85rem;text-align:center;lin
 SPEAKERS = {"cak": ("cak", "cak.png"), "mina": ("ミナ", "mina-clear.png")}
 SPEAKER = re.compile(r"^<!-- speaker: (\S+) -->$")
 
+# 段落の中の `[文字](https://…)` だけをリンクにする。
+LINK = re.compile(r"\[([^\]]+)\]\((https://[^)\s]+)\)")
+
 
 def quote(block: str) -> str:
     lines = [ln[1:].strip() for ln in block.splitlines()]
@@ -114,7 +117,8 @@ def parse(path: Path) -> dict:
         elif b.startswith(">"):
             body.append(quote(b))
         else:
-            body.append(f"<p>{t}</p>")
+            linked = LINK.sub(r'<a href="\2">\1</a>', t)
+            body.append(f"<p>{linked}</p>")
     return {"date": path.stem, "headline": blocks[0][2:], "body": "\n".join(body)}
 
 
