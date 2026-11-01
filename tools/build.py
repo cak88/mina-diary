@@ -34,14 +34,29 @@ CSS = """
 html,body{margin:0}
 body{background:var(--bg);color:var(--fg);font-family:"Hiragino Sans","Noto Sans JP",sans-serif;line-height:1.9}
 a{color:var(--link)}
-header.site{position:relative;height:120px;background:linear-gradient(var(--sky),var(--sky) 60%,var(--sky-deep))}
+header.site{position:relative;height:120px;background:linear-gradient(var(--sky),var(--sky) 55%,var(--sky-deep) 140%)}
 header.site::after{content:"";position:absolute;left:0;right:0;bottom:0;height:24px;
   background:radial-gradient(circle,var(--soil-dark) 1.4px,transparent 1.8px) 0 6px/13px 9px,var(--soil);
   -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 24'%3E%3Cpath d='M0 6Q7 0 14 6T28 6V24H0z'/%3E%3C/svg%3E") 0 0/28px 24px repeat-x;
           mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 24'%3E%3Cpath d='M0 6Q7 0 14 6T28 6V24H0z'/%3E%3C/svg%3E") 0 0/28px 24px repeat-x}
 header.site .inner{position:relative;z-index:1;max-width:44rem;height:100%;margin:0 auto;padding:0 16px;display:flex;align-items:flex-end;gap:.6rem}
 header.site img{width:96px;height:96px;image-rendering:pixelated;display:block}
-header.site a{color:var(--fg);text-decoration:none;font-weight:700;font-size:1.2rem;margin-bottom:36px}
+header.site a.title{color:#4a2f1c;text-decoration:none;font-weight:700;font-size:1.15rem;line-height:1.3;margin-bottom:34px;
+  padding:.3rem .8rem;background:#f6ead2;border:2px solid var(--soil-dark);border-radius:3px;box-shadow:2px 2px 0 var(--soil-dark)}
+header.site nav.menu{margin-left:auto;margin-bottom:34px;display:flex;gap:.5rem}
+header.site nav.menu a{font-size:.85rem;font-weight:700;line-height:1.3;color:var(--fg);text-decoration:none;
+  padding:.3rem .6rem;background:var(--card);border:2px solid var(--fg);border-radius:3px;box-shadow:2px 2px 0 var(--fg)}
+header.site nav.menu a::before{content:"◆";color:var(--cak);margin-right:.2rem;font-size:.7rem}
+@media (max-width:520px){header.site nav.menu{flex-direction:column;gap:.3rem;align-items:flex-end;margin-bottom:30px}header.site nav.menu a{font-size:.75rem;padding:.15rem .45rem}header.site .inner{gap:.4rem}}
+article.doc ul{padding-left:1.3rem}
+.poses{display:flex;flex-wrap:wrap;gap:.25rem;margin:0 0 1.25rem}
+.poses img{width:48px;height:48px;image-rendering:pixelated}
+.person{display:flex;align-items:center;gap:.6rem}
+.person img{width:36px;height:36px;border-radius:50%;image-rendering:pixelated;box-shadow:0 0 0 2px var(--cak)}
+ul.neighbors{list-style:none;padding:0}
+ul.neighbors li{padding:1rem 0;border-bottom:1px dashed var(--line)}
+ul.neighbors p{margin:.5rem 0 0}
+a.banner{display:inline-block;padding:.15rem .7rem;border:2px outset var(--sky-deep);background:var(--sky);color:var(--fg);font-weight:700;font-size:.9rem;text-decoration:none}
 main{max-width:44rem;margin:0 auto;padding:1.75rem 16px 4rem}
 article{background:var(--card);border-radius:4px;box-shadow:0 1px 3px rgba(29,27,77,.12);padding:1.75rem 1.5rem 2rem}
 time{color:var(--sub);font-size:.85rem}
@@ -122,7 +137,8 @@ def page(title: str, content: str, depth: int, desc: str) -> str:
 <style>{CSS}</style>
 </head>
 <body>
-<header class="site"><div class="inner"><img src="{up}assets/mina-clear.png" alt=""><a href="{up}index.html">{TITLE}</a></div></header>
+<header class="site"><div class="inner"><img src="{up}assets/mina-clear.png" alt=""><a class="title" href="{up}index.html">{TITLE}</a>
+<nav class="menu"><a href="{up}about.html">ミナについて</a><a href="{up}neighbors.html">ご近所さん</a></nav></div></header>
 <main>
 {content}
 <footer>{SIGN}<br>{SINCE}</footer>
@@ -161,6 +177,10 @@ def main() -> None:
         f"<img src=\"assets/mina-clear.png\" alt=\"\" style=\"left:{peek(e['date'])}%\"></a></li>"
         for e in reversed(entries)
     )
+    for name, title in (("about", "ミナについて"), ("neighbors", "ご近所さん")):
+        (DIST / f"{name}.html").write_text(
+            page(f"{title} — {TITLE}", (ROOT / "pages" / f"{name}.html").read_text(), 0, title)
+        )
     (DIST / "index.html").write_text(page(TITLE, f"<ul class=\"entries\">\n{items}\n</ul>", 0, SIGN))
 
     now = datetime.now(JST).isoformat(timespec="seconds")
