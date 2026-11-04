@@ -6,6 +6,7 @@ entries の形:
 使い方: python3 tools/build.py
 """
 
+import datetime as dt
 import html
 import re
 import shutil
@@ -122,9 +123,17 @@ def parse(path: Path) -> dict:
     return {"date": path.stem, "headline": blocks[0][2:], "body": "\n".join(body)}
 
 
+FACES = ("clear", "wink", "sprout", "heart", "sleep", "flip")
+
+
 def peek(date: str) -> int:
     """ミナが土から顔を出す横の位置(%)。日付で決まり、カードごとにずれる。"""
     return 8 + sum(map(ord, date)) * 37 % 78
+
+
+def face(date: str) -> str:
+    """カードから顔を出すミナ。日付で決まり、続きの日で同じ顔が並ばない。"""
+    return FACES[dt.date.fromisoformat(date).toordinal() % len(FACES)]
 
 
 def page(title: str, content: str, depth: int, desc: str) -> str:
@@ -178,7 +187,7 @@ def main() -> None:
     items = "\n".join(
         f"<li><a href=\"entries/{e['date']}.html\"><time datetime=\"{e['date']}\">{e['date']}</time>"
         f"{html.escape(e['headline'])}"
-        f"<img src=\"assets/mina-clear.png\" alt=\"\" style=\"left:{peek(e['date'])}%\"></a></li>"
+        f"<img src=\"assets/mina-{face(e['date'])}.png\" alt=\"\" style=\"left:{peek(e['date'])}%\"></a></li>"
         for e in reversed(entries)
     )
     for name, title in (("about", "ミナについて"), ("neighbors", "ご近所さん")):
