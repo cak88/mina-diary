@@ -80,6 +80,7 @@ ul.entries{list-style:none;padding:0;margin:0;display:flex;flex-direction:column
 ul.entries a{position:relative;display:flex;flex-direction:column;gap:.2rem;padding:1rem 1.25rem 3rem;background:var(--card);
   border-radius:4px 4px 0 0;border-bottom:12px solid var(--soil);box-shadow:0 1px 3px rgba(29,27,77,.12);text-decoration:none;color:var(--fg);font-weight:700;line-height:1.55}
 ul.entries a img{position:absolute;bottom:-12px;width:48px;height:48px;image-rendering:pixelated}
+.illust{width:100%;height:auto;image-rendering:pixelated;display:block;margin:0 auto 1em}
 ul.entries a:hover{box-shadow:0 3px 10px rgba(29,27,77,.2)}
 footer{margin-top:2.5rem;color:var(--sub);font-size:.85rem;text-align:center;line-height:1.7}
 """
@@ -91,6 +92,7 @@ SPEAKER = re.compile(r"^<!-- speaker: (\S+) -->$")
 
 # 段落の中の `[文字](https://…)` だけをリンクにする。
 LINK = re.compile(r"\[([^\]]+)\]\((https://[^)\s]+)\)")
+IMG = re.compile(r"^!\[([^\]]*)\]\((\.\./assets/[^)\s]+)\)$")
 
 
 def quote(block: str) -> str:
@@ -113,7 +115,10 @@ def parse(path: Path) -> dict:
     body = []
     for b in blocks[1:]:
         t = html.escape(b[3:] if b.startswith("## ") else b[2:] if b.startswith("> ") else b)
-        if b.startswith("## "):
+        im = IMG.match(b)
+        if im:
+            body.append(f'<img class="illust" src="{html.escape(im.group(2))}" alt="{html.escape(im.group(1))}">')
+        elif b.startswith("## "):
             body.append(f"<h2>{t}</h2>")
         elif b.startswith(">"):
             body.append(quote(b))
