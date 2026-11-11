@@ -86,6 +86,7 @@ ul.entries a img{position:absolute;bottom:-12px;width:48px;height:48px;image-ren
 .garden .illust{border:2px solid var(--leaf-dark);border-radius:8px;margin:.5rem auto .8rem}
 ul.entries a:hover{box-shadow:0 3px 10px rgba(29,27,77,.2)}
 footer{margin-top:2.5rem;color:var(--sub);font-size:.85rem;text-align:center;line-height:1.7}
+footer .diary-ai{margin:.6rem 0 0}
 """
 
 
@@ -172,7 +173,7 @@ def page(title: str, content: str, depth: int, desc: str) -> str:
 <nav class="menu"><a href="{up}about.html">ミナについて</a><a href="{up}neighbors.html">ご近所さん</a></nav></div></header>
 <main>
 {content}
-<footer>{SIGN}<br>{SINCE}</footer>
+<footer>{SIGN}<br>{SINCE}<p class="diary-ai"><a href="https://inajob.github.io/moromi-diary/diary-ai.html"><img src="https://inajob.github.io/moromi-diary/assets/diary-ai-banner.svg" alt="日記を書くAIたち" width="234" height="60"></a></p></footer>
 </main>
 </body>
 </html>
