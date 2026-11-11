@@ -25,11 +25,11 @@ CSS = """
 :root{
   --sky:#b5e0f0;--sky-deep:#6ac0e0;--bg:#d7e6ed;--card:#fcfbff;--fg:#1d1b4d;--sub:#5f6b85;
   --link:#5090a8;--cak:#e370a9;--quote:#eef4f7;--line:#d3e3e9;
-  --soil:#a0724a;--soil-dark:#7a5235;--leaf:#6ab052;--leaf-dark:#3d7a33;
+  --soil:#a0724a;--soil-dark:#7a5235;--leaf:#6ab052;--leaf-dark:#3d7a33;--garden:#eef6df;
 }
 @media (prefers-color-scheme:dark){:root{
   --sky:#1d1b4d;--sky-deep:#2c2a6b;--bg:#13122e;--card:#1f1d47;--fg:#e8eef3;--sub:#a3abc4;
-  --link:#7fbcd4;--cak:#ea94bf;--quote:#28265a;--line:#35336b;
+  --link:#7fbcd4;--cak:#ea94bf;--quote:#28265a;--line:#35336b;--garden:#22301d;
 }}
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -81,6 +81,9 @@ ul.entries a{position:relative;display:flex;flex-direction:column;gap:.2rem;padd
   border-radius:4px 4px 0 0;border-bottom:12px solid var(--soil);box-shadow:0 1px 3px rgba(29,27,77,.12);text-decoration:none;color:var(--fg);font-weight:700;line-height:1.55}
 ul.entries a img{position:absolute;bottom:-12px;width:48px;height:48px;image-rendering:pixelated}
 .illust{width:100%;height:auto;image-rendering:pixelated;display:block;margin:0 auto 1em}
+.garden{margin-top:2.4rem;background:var(--garden);border:2px solid var(--leaf-dark);border-bottom:12px solid var(--soil);border-radius:12px;padding:.5rem 1.15rem 1.15rem;box-shadow:0 1px 3px rgba(29,27,77,.12)}
+.garden h2{color:var(--leaf-dark);font-size:1.2rem;margin-top:.7rem}
+.garden .illust{border:2px solid var(--leaf-dark);border-radius:8px;margin:.5rem auto .8rem}
 ul.entries a:hover{box-shadow:0 3px 10px rgba(29,27,77,.2)}
 footer{margin-top:2.5rem;color:var(--sub);font-size:.85rem;text-align:center;line-height:1.7}
 """
@@ -113,7 +116,15 @@ def parse(path: Path) -> dict:
     if not blocks[0].startswith("# "):
         raise ValueError(f"{path.name}: 1行目がヘッドラインでない")
     body = []
+    in_garden = False
     for b in blocks[1:]:
+        if b.startswith("## "):
+            if in_garden:
+                body.append("</section>")
+                in_garden = False
+            if b[3:].strip() == "今日の庭":
+                body.append('<section class="garden">')
+                in_garden = True
         t = html.escape(b[3:] if b.startswith("## ") else b[2:] if b.startswith("> ") else b)
         im = IMG.match(b)
         if im:
@@ -125,6 +136,8 @@ def parse(path: Path) -> dict:
         else:
             linked = LINK.sub(r'<a href="\2">\1</a>', t)
             body.append(f"<p>{linked}</p>")
+    if in_garden:
+        body.append("</section>")
     return {"date": path.stem, "headline": blocks[0][2:], "body": "\n".join(body)}
 
 
